@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import useStore from '../lib/store';
 
 export default function JobListingPage() {
   const navigate = useNavigate();
-  const { jobs } = useStore();
-  const [mounted, setMounted] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
+    fetch('/api/jobs')
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) setJobs(json.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
-
-  if (!mounted) return null;
 
   return (
     <div className="bg-background text-on-surface flex flex-col min-h-screen">
@@ -24,7 +30,7 @@ export default function JobListingPage() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/post-job" className="bg-secondary-container text-on-secondary-container px-6 py-2 rounded text-sm font-bold">Post a Job</Link>
+          <Link to="/" className="bg-secondary-container text-on-secondary-container px-6 py-2 rounded text-sm font-bold">Post a Job</Link>
         </div>
       </header>
 
@@ -35,8 +41,10 @@ export default function JobListingPage() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-          {jobs.length > 0 ? jobs.map(job => (
-            <div key={job.id} className="bg-surface-container-lowest border border-outline-variant rounded transition-all overflow-hidden">
+          {loading ? (
+             <p className="p-6 text-center">Loading active cycles...</p>
+          ) : jobs.length > 0 ? jobs.map(job => (
+            <div key={job.id} className="bg-surface-container-lowest border border-outline-variant rounded transition-all overflow-hidden hover:shadow-md">
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ flexGrow: 1, padding: '1.5rem' }}>
                   <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem' }}>
@@ -62,48 +70,11 @@ export default function JobListingPage() {
               </div>
             </div>
           )) : (
-            <>
-              {/* Sample 1 */}
-              <div className="bg-surface-container-lowest border border-outline-variant rounded transition-all overflow-hidden">
-                <div style={{ padding: '1.5rem' }}>
-                  <span className="text-xs font-bold text-secondary uppercase tracking-wider mb-1 block">Human Capital</span>
-                  <h3 className="text-2xl font-bold text-primary">Senior Recruitment Specialist</h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem', color: 'var(--color-on-surface-variant)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <span className="material-symbols-outlined text-sm">location_on</span>
-                      <span className="text-sm">Jakarta, Indonesia</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <span className="material-symbols-outlined text-sm">schedule</span>
-                      <span className="text-sm">Full-time</span>
-                    </div>
-                  </div>
-                  <div style={{ borderTop: '1px solid var(--color-outline-variant)', paddingTop: '1rem', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-                    <Link to="/job-detail/sample-1" style={{ background: 'var(--color-primary)', color: 'var(--color-on-primary)', padding: '0.5rem 1.5rem', borderRadius: '0.25rem', fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none' }}>Manage Candidates</Link>
-                  </div>
-                </div>
-              </div>
-              {/* Sample 2 */}
-              <div className="bg-surface-container-lowest border border-outline-variant rounded transition-all overflow-hidden">
-                <div style={{ padding: '1.5rem' }}>
-                  <span className="text-xs font-bold text-secondary uppercase tracking-wider mb-1 block">Information Technology</span>
-                  <h3 className="text-2xl font-bold text-primary">Full Stack Developer - Internship</h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem', color: 'var(--color-on-surface-variant)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <span className="material-symbols-outlined text-sm">location_on</span>
-                      <span className="text-sm">Remote</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <span className="material-symbols-outlined text-sm">school</span>
-                      <span className="text-sm">Internship</span>
-                    </div>
-                  </div>
-                  <div style={{ borderTop: '1px solid var(--color-outline-variant)', paddingTop: '1rem', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-                    <Link to="/job-detail/sample-2" style={{ background: 'var(--color-primary)', color: 'var(--color-on-primary)', padding: '0.5rem 1.5rem', borderRadius: '0.25rem', fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none' }}>Manage Candidates</Link>
-                  </div>
-                </div>
-              </div>
-            </>
+            <div className="p-12 text-center border border-dashed rounded border-outline-variant bg-surface-container-lowest">
+               <span className="material-symbols-outlined text-4xl text-outline mb-2">work_off</span>
+               <p className="text-on-surface-variant">Belum ada job post yang aktif di database.</p>
+               <Link to="/" className="text-primary font-bold mt-2 inline-block">Buat Job Post Pertama →</Link>
+            </div>
           )}
         </div>
       </main>

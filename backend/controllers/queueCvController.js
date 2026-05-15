@@ -9,57 +9,53 @@ import { extractTextFromPdf } from '../lib/parsePdf.js';
 export async function queueCv(req, res) {
   try {
     const cvFile = req.file;
-    const parameters = JSON.parse(req.body.parameters);
-    let sessionId = req.body.session_id || null;
-    const jobId = req.body.job_id || null;
+    const jobId = req.body.job_id;
 
     if (!cvFile) {
       return res.status(400).json({ error: 'File CV tidak ditemukan' });
+    }
+    if (!jobId) {
+      return res.status(400).json({ error: 'job_id wajib diisi' });
     }
 
     const buffer = cvFile.buffer;
     const cvText = await extractTextFromPdf(buffer);
 
-    // Batasi teks ke 8000 karakter untuk hemat token & storage
+    // Batasi teks ke 8000 karakter
     const truncatedText = cvText ? cvText.slice(0, 8000) : '';
 
-    // Jika text extraction gagal (PDF scan/gambar), simpan base64 untuk Gemini multimodal
+    // Jika text extraction gagal, simpan base64
     const pdfBase64 = (!truncatedText || truncatedText.length === 0)
       ? buffer.toString('base64')
       : null;
 
-    // Pastikan session ada di tabel sessions sebelum insert candidate
-    if (sessionId) {
-      const { error: sessionError } = await supabase
-        .from('sessions')
-        .upsert(
-          { id: sessionId, positions: [parameters] },
-          { onConflict: 'id', ignoreDuplicates: true }
-        );
-
-      if (sessionError) {
-        console.error('session upsert error:', sessionError);
-        sessionId = null;
-      }
-    }
-
-    const { data, error } = await supabase
-      .from('candidates')
+    // 1. Simpan ke mst_candidate
+    const { data: candidate, error: candError } = await supabase
+      .from('mst_candidate')
       .insert({
         file_name: cvFile.originalname,
-        position_name: parameters.positionName,
-        role_name: parameters.roleName || null,
+        cv_text: truncatedText,
+        pdf_base64: pdfBase64,
+      })
+      .select()
+      .single();
+
+    if (candError) throw candError;
+
+    // 2. Buat record di trx_candidate_analysis
+    const { data: analysis, error: analError } = await supabase
+      .from('trx_candidate_analysis')
+      .insert({
         job_id: jobId,
-        session_id: sessionId,
-        parameters: { ...parameters, cvText: truncatedText, pdfBase64: pdfBase64 || null },
+        candidate_id: candidate.id,
         status: 'pending',
       })
       .select()
       .single();
 
-    if (error) throw error;
+    if (analError) throw analError;
 
-    return res.status(201).json({ success: true, id: data.id });
+    return res.status(201).json({ success: true, analysisId: analysis.id, candidateId: candidate.id });
 
   } catch (err) {
     console.error('queue-cv error:', err);
