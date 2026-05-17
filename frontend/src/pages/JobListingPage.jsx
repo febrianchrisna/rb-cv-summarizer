@@ -25,12 +25,12 @@ export default function JobListingPage() {
         <div className="flex items-center gap-12">
           <span className="text-2xl font-bold text-on-primary">ACC Career</span>
           <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-            <Link style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 700 }} to="/">Job Posting</Link>
-            <Link className="text-on-primary border-b-2 border-secondary-container pb-1 font-bold" to="/job-listing">Job Listing</Link>
+            <Link className="text-on-primary font-bold transition-all" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }} to="/">Job Posting</Link>
+            <Link className="text-on-primary font-bold transition-all" style={{ textDecoration: 'none' }} to="/job-listing">Job Listing</Link>
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/" className="bg-secondary-container text-on-secondary-container px-6 py-2 rounded text-sm font-bold">Post a Job</Link>
+          <Link to="/" className="bg-secondary-container text-on-secondary-container px-6 py-2 rounded text-sm font-bold" style={{ textDecoration: 'none' }}>Post a Job</Link>
         </div>
       </header>
 

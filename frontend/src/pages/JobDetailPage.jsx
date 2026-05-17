@@ -146,7 +146,7 @@ export default function JobDetailPage() {
           <span style={{ fontSize: "1.5rem", fontWeight: 700, color: "white" }}>ACC Career</span>
           <nav style={{ ...S.row, gap: "2rem" }}>
             <Link to="/" style={{ color: "rgba(255,255,255,0.8)", fontWeight: 700, textDecoration: "none" }}>Job Posting</Link>
-            <Link to="/job-listing" style={{ color: "white", fontWeight: 700, borderBottom: "2px solid var(--color-secondary-container)", paddingBottom: "0.25rem", textDecoration: "none" }}>Job Listing</Link>
+            <Link to="/job-listing" style={{ color: "white", fontWeight: 700, textDecoration: "none" }}>Job Listing</Link>
           </nav>
         </div>
       </header>
@@ -195,9 +195,68 @@ export default function JobDetailPage() {
                     </li>
                   ))}
                 </ul>
-                <button onClick={handleProcessCVs} disabled={isProcessing} style={{ padding: "0.75rem 2rem", background: "var(--color-primary)", color: "var(--color-on-primary)", fontWeight: 700, borderRadius: "0.25rem", border: "none", cursor: isProcessing ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "0.5rem", marginLeft: "auto" }}>
-                  {isProcessing ? "Menganalisis..." : "Analisis CV"}
-                </button>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    borderTop: "1px solid var(--color-outline-variant)",
+                    paddingTop: "1.5rem",
+                  }}
+                >
+                  <button
+                    onClick={handleProcessCVs}
+                    disabled={isProcessing}
+                    style={{
+                      padding: "0.75rem 2rem",
+                      background: "var(--color-primary)",
+                      color: "var(--color-on-primary)",
+                      fontWeight: 700,
+                      borderRadius: "0.25rem",
+                      border: "none",
+                      cursor: isProcessing ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      opacity: isProcessing ? 0.7 : 1,
+                    }}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <svg
+                          style={{
+                            width: "1.25rem",
+                            height: "1.25rem",
+                            animation: "spin 1s linear infinite",
+                          }}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            opacity="0.25"
+                          />
+                          <path
+                            fill="currentColor"
+                            opacity="0.75"
+                            d="M4 12a8 8 0 018-8v8H4z"
+                          />
+                        </svg>
+                        Menganalisis...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined">
+                          psychology
+                        </span>
+                        Analisis CV
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -304,22 +363,335 @@ export default function JobDetailPage() {
       </main>
 
       {selectedCandidate && (
-        <div className="modal-backdrop" onClick={() => setSelectedCandidate(null)} style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: "32rem", maxHeight: "85vh", overflowY: "auto", borderRadius: "0.5rem", background: "white", padding: "1.5rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-              <h2 style={{ fontSize: "1.125rem", fontWeight: 700 }}>{selectedCandidate.candidate_name || "Detail Kandidat"}</h2>
-              <button onClick={() => setSelectedCandidate(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.5rem" }}>×</button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <p style={{ fontSize: "0.875rem" }}><strong>Email:</strong> {selectedCandidate.email || "-"}</p>
-              <p style={{ fontSize: "0.875rem" }}><strong>Telepon:</strong> {selectedCandidate.phone || "-"}</p>
-              <p style={{ fontSize: "0.875rem" }}><strong>Skor:</strong> {selectedCandidate.score}</p>
-              {selectedCandidate.role_name && <p style={{ fontSize: "0.875rem" }}><strong>Role:</strong> {selectedCandidate.role_name}</p>}
-              <p style={{ fontSize: "0.875rem" }}><strong>Ringkasan:</strong> {selectedCandidate.summary || "-"}</p>
-              <div style={{ background: "#f8f9fa", padding: "1rem", borderRadius: "0.25rem" }}>
-                 <p style={{ fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.5rem" }}>AI REASONING</p>
-                 <p style={{ fontSize: "0.875rem", fontStyle: "italic" }}>{selectedCandidate.reasoning}</p>
+        <div
+          className="modal-backdrop"
+          onClick={() => setSelectedCandidate(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1rem",
+            background: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: "32rem",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              borderRadius: "0.5rem",
+              background: "white",
+              border: "1px solid var(--color-outline-variant)",
+              boxShadow: "0 10px 15px rgba(0,0,0,0.1)",
+            }}
+          >
+            <div
+              style={{
+                padding: "1.5rem",
+                borderBottom: "1px solid var(--color-outline-variant)",
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+              }}
+            >
+              <div>
+                <h2 style={{ fontSize: "1.125rem", fontWeight: 700 }}>
+                  {selectedCandidate.candidate_name || "Tidak diketahui"}
+                </h2>
+                <p
+                  style={{
+                    fontSize: "0.875rem",
+                    color: "var(--color-on-surface-variant)",
+                    marginTop: "0.125rem",
+                  }}
+                >
+                  {selectedCandidate.email}
+                  {selectedCandidate.email && selectedCandidate.phone
+                    ? " · "
+                    : ""}
+                  {selectedCandidate.phone}
+                </p>
+                <p
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "var(--color-on-surface-variant)",
+                    marginTop: "0.25rem",
+                  }}
+                >
+                  Skor: <strong>{selectedCandidate.score}</strong> ·{" "}
+                  {selectedCandidate.match_level}
+                  {selectedCandidate.role_name && (
+                    <span>
+                      {" "}
+                      · Role: <strong>{selectedCandidate.role_name}</strong>
+                    </span>
+                  )}
+                </p>
               </div>
+              <button
+                onClick={() => setSelectedCandidate(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1.5rem",
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div
+              style={{
+                padding: "1.5rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "1rem",
+              }}
+            >
+              {selectedCandidate.summary && (
+                <div>
+                  <p
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "var(--color-on-surface-variant)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Ringkasan
+                  </p>
+                  <p style={{ fontSize: "0.875rem", lineHeight: 1.625 }}>
+                    {selectedCandidate.summary}
+                  </p>
+                </div>
+              )}
+              {selectedCandidate.role_scores &&
+                Object.keys(selectedCandidate.role_scores).length > 0 && (
+                  <div>
+                    <p
+                      style={{
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        color: "var(--color-on-surface-variant)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
+                      Skor per Role
+                    </p>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      {Object.entries(selectedCandidate.role_scores)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([role, s]) => {
+                          const isA = role === selectedCandidate.role_name;
+                          const c =
+                            s >= 70
+                              ? "#166534"
+                              : s >= 45
+                                ? "#854d0e"
+                                : "#ba1a1a";
+                          return (
+                            <div
+                              key={role}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.75rem",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.75rem",
+                                  fontWeight: 600,
+                                  width: "4rem",
+                                  flexShrink: 0,
+                                  color: isA
+                                    ? "var(--color-primary)"
+                                    : "var(--color-on-surface-variant)",
+                                }}
+                              >
+                                {role}
+                                {isA ? " ★" : ""}
+                              </span>
+                              <div
+                                style={{
+                                  flexGrow: 1,
+                                  height: "0.5rem",
+                                  borderRadius: "9999px",
+                                  background:
+                                    "var(--color-surface-container-high)",
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    height: "100%",
+                                    borderRadius: "9999px",
+                                    width: `${s}%`,
+                                    backgroundColor: c,
+                                  }}
+                                />
+                              </div>
+                              <span
+                                style={{
+                                  fontSize: "0.75rem",
+                                  fontWeight: 700,
+                                  width: "2rem",
+                                  textAlign: "right",
+                                  color: c,
+                                }}
+                              >
+                                {s}
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              {selectedCandidate.matched_requirements?.length > 0 && (
+                <div>
+                  <p
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "#166534",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Terpenuhi
+                  </p>
+                  <ul
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.25rem",
+                    }}
+                  >
+                    {selectedCandidate.matched_requirements.map((r, i) => (
+                      <li
+                        key={i}
+                        style={{
+                          display: "flex",
+                          gap: "0.5rem",
+                          fontSize: "0.875rem",
+                        }}
+                      >
+                        <span style={{ color: "#166534" }}>✓</span>
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {selectedCandidate.missing_requirements?.length > 0 && (
+                <div>
+                  <p
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "#ba1a1a",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Tidak Terpenuhi
+                  </p>
+                  <ul
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.25rem",
+                    }}
+                  >
+                    {selectedCandidate.missing_requirements.map((r, i) => (
+                      <li
+                        key={i}
+                        style={{
+                          display: "flex",
+                          gap: "0.5rem",
+                          fontSize: "0.875rem",
+                        }}
+                      >
+                        <span style={{ color: "#ba1a1a" }}>✗</span>
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {selectedCandidate.reasoning && (
+                <div
+                  style={{
+                    borderRadius: "0.5rem",
+                    padding: "1rem",
+                    background: "var(--color-surface-container)",
+                    border: "1px solid var(--color-outline-variant)",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "#003e6f",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    AI Reasoning
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "0.875rem",
+                      fontStyle: "italic",
+                      lineHeight: 1.625,
+                    }}
+                  >
+                    {selectedCandidate.reasoning}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div
+              style={{
+                padding: "1rem",
+                borderTop: "1px solid var(--color-outline-variant)",
+              }}
+            >
+              <button
+                onClick={() => setSelectedCandidate(null)}
+                style={{
+                  width: "100%",
+                  padding: "0.625rem",
+                  borderRadius: "0.25rem",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  border: "1px solid var(--color-outline-variant)",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </div>

@@ -25,8 +25,8 @@ export default function JobPostingPage() {
         <div className="flex items-center gap-12">
           <span className="text-2xl font-bold text-on-primary">ACC Career</span>
           <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-            <Link className="text-on-primary border-b-2 border-secondary-container pb-1 font-bold transition-all" to="/">Job Posting</Link>
-            <Link className="text-on-primary" style={{ opacity: 0.8 }} to="/job-listing">Job Listing</Link>
+            <Link className="text-on-primary font-bold transition-all" style={{ textDecoration: 'none' }} to="/">Job Posting</Link>
+            <Link className="text-on-primary font-bold transition-all" style={{ opacity: 0.8, textDecoration: 'none' }} to="/job-listing">Job Listing</Link>
           </nav>
         </div>
       </header>
@@ -40,7 +40,7 @@ export default function JobPostingPage() {
 
       <main style={{ flexGrow: 1, padding: '2rem 1.5rem', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
         <div className="flex justify-end items-center mb-6">
-          <Link to="/post-job" className="bg-secondary-container text-on-secondary-container px-8 py-3 rounded shadow-sm text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all">
+          <Link to="/post-job" className="bg-secondary-container text-on-secondary-container px-8 py-3 rounded shadow-sm text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all" style={{ textDecoration: 'none' }}>
             <span style={{ fontSize: '1.125rem', lineHeight: 1 }}>+</span>
             Post a Job
           </Link>

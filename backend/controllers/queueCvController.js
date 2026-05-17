@@ -42,9 +42,9 @@ export async function queueCv(req, res) {
 
     if (candError) throw candError;
 
-    // 2. Buat record di trx_candidate_analysis
+    // 2. Buat record di trn_candidate_analysis
     const { data: analysis, error: analError } = await supabase
-      .from('trx_candidate_analysis')
+      .from('trn_candidate_analysis')
       .insert({
         job_id: jobId,
         candidate_id: candidate.id,

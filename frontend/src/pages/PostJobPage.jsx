@@ -15,7 +15,7 @@ export default function PostJobPage() {
     title: '',
     description: '',
     qualification: '',
-    category: 'Permanent',
+    category: 'Experienced',
     field: 'Information Technology',
     requirements: [
       { field: 'Age', mandatory: true, value: 'Max 35 Years' },
@@ -208,7 +208,11 @@ export default function PostJobPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       <label className="text-sm font-semibold text-on-surface-variant">Job Category</label>
-                      <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="e.g., Permanent" style={inputStyle} />
+                      <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={inputStyle}>
+                        <option value="Experienced">Experienced</option>
+                        <option value="Fresh Graduate">Fresh Graduate</option>
+                        <option value="Internship">Internship</option>
+                      </select>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       <label className="text-sm font-semibold text-on-surface-variant">Field</label>

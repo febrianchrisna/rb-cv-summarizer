@@ -13,7 +13,7 @@ export async function getResults(req, res) {
     }
 
     const { data, error } = await supabase
-      .from('trx_candidate_analysis')
+      .from('trn_candidate_analysis')
       .select(`
         *,
         mst_candidate (*),

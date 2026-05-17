@@ -84,6 +84,7 @@ async function matchCandidateToJob(profile, parameters) {
   const prompt = `Kamu adalah Job Matching Agent. Tugasmu mengevaluasi kesesuaian kandidat dengan posisi yang dilamar.
 
 POSISI: ${parameters.positionName || '(tidak ditentukan)'}
+KATEGORI PEKERJAAN: ${parameters.category || '-'} (Penting: Sesuaikan ekspektasi pengalaman kerja berdasarkan kategori ini, misal Internship/Fresh Graduate tidak butuh banyak pengalaman)
 DESKRIPSI JOB: ${parameters.jobDescription || '-'}
 KUALIFIKASI: ${parameters.qualification || '-'}
 PERSYARATAN:
@@ -150,6 +151,7 @@ async function assignMultiRole(profile, parameters, existingByRole) {
 
   const prompt = `Kamu adalah Role Assignment Agent untuk program "${parameters.positionName}".
 
+KATEGORI PEKERJAAN: ${parameters.category || '-'} (Penting: Sesuaikan ekspektasi pengalaman kerja berdasarkan kategori ini, misal Internship/Fresh Graduate tidak butuh banyak pengalaman)
 DESKRIPSI PROGRAM: ${parameters.jobDescription || '-'}
 KUALIFIKASI UMUM: ${parameters.qualification || '-'}
 PERSYARATAN:
@@ -214,7 +216,7 @@ export async function processCv(req, res) {
 
     // Ambil data transaksi, data kandidat, dan data job post
     const { data: analysis, error: fetchError } = await supabase
-      .from('trx_candidate_analysis')
+      .from('trn_candidate_analysis')
       .select(`
         *,
         mst_candidate (*),
@@ -236,7 +238,7 @@ export async function processCv(req, res) {
 
     if (!cvText && !pdfBase64) throw new Error('Data CV tidak ditemukan');
 
-    await supabase.from('trx_candidate_analysis').update({ status: 'processing' }).eq('id', analysisId);
+    await supabase.from('trn_candidate_analysis').update({ status: 'processing' }).eq('id', analysisId);
 
     console.log(`[cv-agent] Mulai analisis transaksi ${analysisId}`);
 
@@ -261,6 +263,7 @@ export async function processCv(req, res) {
 
     const parameters = {
       positionName: job.position_name || job.title,
+      category: job.category,
       jobDescription: job.description,
       qualification: job.qualification,
       requirements: job.requirements,
@@ -282,7 +285,7 @@ export async function processCv(req, res) {
     const finalRoleName = match.recommended_role || null;
 
     const { error: updateError } = await supabase
-      .from('trx_candidate_analysis')
+      .from('trn_candidate_analysis')
       .update({
         score,
         match_level: match.match_level,
@@ -305,7 +308,7 @@ export async function processCv(req, res) {
     console.error('[cv-agent] Error:', err.message);
     if (analysisId) {
       await supabase
-        .from('trx_candidate_analysis')
+        .from('trn_candidate_analysis')
         .update({ status: 'error', error_message: err.message })
         .eq('id', analysisId);
     }
