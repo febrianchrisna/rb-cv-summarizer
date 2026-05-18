@@ -6,6 +6,7 @@ import path from 'path';
 import queueCvRoute from './routes/queueCv.js';
 import processCvRoute from './routes/processCv.js';
 import resultsRoute from './routes/results.js';
+import jobsRoute from './routes/jobs.js';
 
 dotenv.config({ path: path.resolve(import.meta.dirname, '../.env') });
 
@@ -45,6 +46,7 @@ app.use(express.json());
 app.use(queueCvRoute);    // POST /api/queue-cv
 app.use(processCvRoute);  // POST /api/process-cv
 app.use(resultsRoute);    // GET  /api/get-results
+app.use(jobsRoute);       // CRUD /api/jobs
 
 // Health check
 app.get('/health', (_req, res) => {

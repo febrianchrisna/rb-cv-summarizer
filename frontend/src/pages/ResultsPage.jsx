@@ -4,8 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 export default function ResultsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const position = searchParams.get('position');
-  const sessionId = searchParams.get('session_id');
+  const jobId = searchParams.get('job_id');
 
   const [candidates, setCandidates] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -13,11 +12,13 @@ export default function ResultsPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (sessionId) params.set('session_id', sessionId);
-    if (position) params.set('position', position);
+    if (!jobId) {
+      setError("job_id tidak ditemukan");
+      setLoading(false);
+      return;
+    }
 
-    fetch(`/api/get-results?${params.toString()}`)
+    fetch(`/api/get-results?job_id=${jobId}`)
       .then(r => r.json())
       .then(json => {
         if (json.success) setCandidates(json.data || []);
@@ -25,7 +26,7 @@ export default function ResultsPage() {
         setLoading(false);
       })
       .catch(err => { setError(err.message); setLoading(false); });
-  }, [position, sessionId, navigate]);
+  }, [jobId]);
 
   const getScoreColor = (score) => {
     if (score >= 75) return { bg: '#dcfce7', text: '#166534', border: '#86efac' };
@@ -47,22 +48,22 @@ export default function ResultsPage() {
           <span className="text-white font-bold text-2xl">ACC Career</span>
           <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
             <Link to="/" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.875rem', textDecoration: 'none' }}>Job Posting</Link>
-            <Link to="/results" style={{ color: 'white', borderBottom: '2px solid #fe9835', paddingBottom: '0.25rem', fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none' }}>Job Listing</Link>
+            <Link to="/job-listing" style={{ color: 'white', borderBottom: '2px solid #fe9835', paddingBottom: '0.25rem', fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none' }}>Job Listing</Link>
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button onClick={() => navigate('/')} style={{ backgroundColor: '#fe9835', color: '#693600', fontWeight: 600, fontSize: '0.875rem', padding: '0.5rem 1.5rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Post a Job</button>
+          <button onClick={() => navigate('/post-job')} style={{ backgroundColor: '#fe9835', color: '#693600', fontWeight: 600, fontSize: '0.875rem', padding: '0.5rem 1.5rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Post a Job</button>
         </div>
       </header>
 
       <section className="px-6 py-12" style={{ backgroundColor: '#005696' }}>
         <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
-          <button onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', marginBottom: '1rem' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>arrow_back</span> Analisis Baru
+          <button onClick={() => navigate('/job-listing')} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', marginBottom: '1rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>arrow_back</span> Kembali ke Daftar
           </button>
           <h1 className="text-white font-bold text-4xl mb-2">Hasil Ranking CV</h1>
           <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem' }}>
-            Posisi: <span style={{ color: 'white', fontWeight: 600 }}>{position || '—'}</span>
+            {candidates.length > 0 ? candidates[0].job_title : 'Memuat...'}
             {!loading && candidates.length > 0 && <span style={{ marginLeft: '0.5rem' }}>· {candidates.length} kandidat dianalisis</span>}
           </p>
         </div>

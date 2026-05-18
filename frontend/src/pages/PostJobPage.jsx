@@ -1,23 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import useStore from '../lib/store';
 
 export default function PostJobPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id');
-  const { jobs, addJob, updateJob, deleteJob } = useStore();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     fppk: '',
-    positionName: '',
+    position_name: '',
     title: '',
-    subtitle: '',
-    jobDescription: '',
+    description: '',
     qualification: '',
-    category: 'Permanent',
+    category: 'Experienced',
     field: 'Information Technology',
     requirements: [
       { field: 'Age', mandatory: true, value: 'Max 35 Years' },
@@ -28,32 +26,73 @@ export default function PostJobPage() {
   });
 
   useEffect(() => {
-    if (id && jobs.length > 0) {
-      const existing = jobs.find(j => j.id === id);
-      if (existing) setForm(existing);
-    }
-  }, [id, jobs]);
-
-  const handleSaveDraft = () => {
     if (id) {
-      updateJob(id, { ...form });
-    } else {
-      addJob({ ...form, status: 'draft', createdAt: new Date().toISOString() });
+      setLoading(true);
+      fetch(`/api/jobs/${id}`)
+        .then(r => r.json())
+        .then(json => {
+          if (json.success) setForm(json.data);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
     }
-    navigate('/');
+  }, [id]);
+
+  const handleSaveDraft = async () => {
+    try {
+      const payload = { ...form, status: 'draft' };
+      const url = id ? `/api/jobs/${id}` : '/api/jobs';
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const json = await res.json();
+      if (json.success) navigate('/job-listing');
+      else alert(json.error || 'Gagal menyimpan draft');
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
-  const handleCreatePost = () => {
-    if (!id) {
-      addJob({ ...form, status: 'published', createdAt: new Date().toISOString() });
-    } else {
-      updateJob(id, { ...form, status: 'published' });
+  const handleCreatePost = async () => {
+    try {
+      const payload = { ...form, status: 'published' };
+      const url = id ? `/api/jobs/${id}` : '/api/jobs';
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const json = await res.json();
+      if (json.success) navigate('/job-listing');
+      else alert(json.error || 'Gagal mempublish lowongan');
+    } catch (err) {
+      alert(err.message);
     }
-    navigate('/');
   };
 
-  const handleDelete = () => {
-    if (id) { deleteJob(id); navigate('/'); }
+  const handleDelete = async () => {
+    if (!id) return;
+    if (!confirm('Hapus lowongan ini?')) return;
+    
+    try {
+      const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (json.success) navigate('/job-listing');
+      else alert(json.error || 'Gagal menghapus');
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   const addRequirement = () => {
@@ -78,6 +117,8 @@ export default function PostJobPage() {
 
   const inputStyle = { width: '100%', border: '1px solid var(--color-outline)', padding: '0.75rem 1rem', outline: 'none', background: 'white', borderRadius: '0.25rem', fontFamily: 'inherit', fontSize: '0.875rem' };
 
+  if (loading) return <div className="p-10">Loading job data...</div>;
+
   return (
     <div className="bg-background text-on-surface font-sans min-h-screen flex flex-col">
       {/* Top Nav */}
@@ -89,8 +130,8 @@ export default function PostJobPage() {
             <Link style={{ color: 'rgba(255,255,255,0.8)' }} to="/job-listing">Job Listing</Link>
           </div>
         </div>
-        <Link to="/">
-          <button className="bg-secondary-container text-on-secondary-container px-6 py-2 font-bold text-sm rounded">Back to Dashboard</button>
+        <Link to="/job-listing">
+          <button className="bg-secondary-container text-on-secondary-container px-6 py-2 font-bold text-sm rounded">Back to List</button>
         </Link>
       </nav>
 
@@ -151,30 +192,36 @@ export default function PostJobPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       <label className="text-sm font-semibold text-on-surface-variant">No. FPPK</label>
-                      <input value={form.fppk} onChange={e => setForm({ ...form, fppk: e.target.value })} style={inputStyle} placeholder="Search FPPK Number..." type="text" />
+                      <input value={form.fppk} onChange={e => setForm({ ...form, fppk: e.target.value })} style={inputStyle} placeholder="Enter FPPK Number..." type="text" />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <label className="text-sm font-semibold text-on-surface-variant">Job Position / Roles</label>
-                      <input value={form.positionName} onChange={e => setForm({ ...form, positionName: e.target.value })} style={inputStyle} placeholder="Contoh: SA, BA, QC (pisahkan dengan koma)" type="text" />
-                      <p className="text-xs text-on-surface-variant">Jika ada beberapa role, pisahkan dengan koma. Akan dijadikan filter pada dashboard kandidat.</p>
+                      <label className="text-sm font-semibold text-on-surface-variant">Job Position (internal name)</label>
+                      <input value={form.position_name} onChange={e => setForm({ ...form, position_name: e.target.value })} style={inputStyle} placeholder="Contoh: Senior Fullstack Developer" type="text" />
                     </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <label className="text-sm font-semibold text-on-surface-variant">Job Post Title</label>
+                      <label className="text-sm font-semibold text-on-surface-variant">Job Post Title (display name)</label>
                       <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} style={inputStyle} type="text" />
                     </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <label className="text-sm font-semibold text-on-surface-variant">Job Category / Field</label>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="Category (e.g., Permanent)" style={{ ...inputStyle, width: '50%' }} />
-                        <input value={form.field} onChange={e => setForm({ ...form, field: e.target.value })} placeholder="Field (e.g., IT)" style={{ ...inputStyle, width: '50%' }} />
-                      </div>
+                      <label className="text-sm font-semibold text-on-surface-variant">Job Category</label>
+                      <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={inputStyle}>
+                        <option value="Experienced">Experienced</option>
+                        <option value="Fresh Graduate">Fresh Graduate</option>
+                        <option value="Internship">Internship</option>
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <label className="text-sm font-semibold text-on-surface-variant">Field</label>
+                      <input value={form.field} onChange={e => setForm({ ...form, field: e.target.value })} placeholder="e.g., IT" style={inputStyle} />
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <label className="text-sm font-semibold text-on-surface-variant">Job Post Description</label>
-                    <textarea value={form.jobDescription} onChange={e => setForm({ ...form, jobDescription: e.target.value })} style={{ ...inputStyle, resize: 'none' }} placeholder="Enter detailed job responsibilities..." rows="4" />
+                    <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, resize: 'none' }} placeholder="Enter detailed job responsibilities..." rows="4" />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <label className="text-sm font-semibold text-on-surface-variant">Qualification Description</label>
@@ -206,7 +253,7 @@ export default function PostJobPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {form.requirements.map((req, i) => (
+                        {form.requirements?.map((req, i) => (
                           <tr key={i} style={{ borderBottom: '1px solid var(--color-outline-variant)' }}>
                             <td className="px-4 py-3">
                               <input value={req.field} onChange={e => updateRequirement(i, 'field', e.target.value)} style={{ border: '1px solid var(--color-outline)', padding: '0.25rem 0.5rem', width: '100%', borderRadius: '0.25rem' }} type="text" />

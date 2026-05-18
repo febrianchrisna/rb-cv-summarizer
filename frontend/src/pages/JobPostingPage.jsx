@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import useStore from '../lib/store';
 
 export default function JobPostingPage() {
   const navigate = useNavigate();
-  const { jobs } = useStore();
-  const [mounted, setMounted] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
+    fetch('/api/jobs')
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) setJobs(json.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
-
-  if (!mounted) return null;
 
   return (
     <div className="bg-background text-on-surface font-sans min-h-screen flex flex-col">
@@ -19,8 +25,8 @@ export default function JobPostingPage() {
         <div className="flex items-center gap-12">
           <span className="text-2xl font-bold text-on-primary">ACC Career</span>
           <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-            <Link className="text-on-primary border-b-2 border-secondary-container pb-1 font-bold transition-all" to="/">Job Posting</Link>
-            <Link className="text-on-primary" style={{ opacity: 0.8 }} to="/job-listing">Job Listing</Link>
+            <Link className="text-on-primary font-bold transition-all" style={{ textDecoration: 'none' }} to="/">Job Posting</Link>
+            <Link className="text-on-primary font-bold transition-all" style={{ opacity: 0.8, textDecoration: 'none' }} to="/job-listing">Job Listing</Link>
           </nav>
         </div>
       </header>
@@ -34,7 +40,7 @@ export default function JobPostingPage() {
 
       <main style={{ flexGrow: 1, padding: '2rem 1.5rem', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
         <div className="flex justify-end items-center mb-6">
-          <Link to="/post-job" className="bg-secondary-container text-on-secondary-container px-8 py-3 rounded shadow-sm text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all">
+          <Link to="/post-job" className="bg-secondary-container text-on-secondary-container px-8 py-3 rounded shadow-sm text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all" style={{ textDecoration: 'none' }}>
             <span style={{ fontSize: '1.125rem', lineHeight: 1 }}>+</span>
             Post a Job
           </Link>
@@ -52,14 +58,16 @@ export default function JobPostingPage() {
               </tr>
             </thead>
             <tbody>
-              {jobs.length > 0 ? jobs.map(job => (
+              {loading ? (
+                <tr><td colSpan="5" className="px-4 py-8 text-center text-sm">Loading jobs...</td></tr>
+              ) : jobs.length > 0 ? jobs.map(job => (
                 <tr key={job.id} className="bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer">
                   <td className="px-4 py-4 text-sm"><Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{job.fppk || '-'}</Link></td>
                   <td className="px-4 py-4 text-sm font-semibold text-primary"><Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{job.title || '-'}</Link></td>
                   <td className="px-4 py-4 text-sm text-on-surface-variant"><Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{job.category || 'Permanent'}</Link></td>
                   <td className="px-4 py-4 text-sm text-on-surface-variant"><Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{job.field || '-'}</Link></td>
                   <td className="px-4 py-4 text-sm text-on-surface-variant" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{new Date(job.createdAt).toLocaleDateString()}</Link>
+                    <Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{job.created_at ? new Date(job.created_at).toLocaleDateString() : '-'}</Link>
                     <Link to={`/post-job?id=${job.id}`} style={{ color: 'var(--color-secondary)', padding: '0.25rem 0.75rem', border: '1px solid var(--color-secondary)', borderRadius: '0.25rem', fontSize: '0.75rem' }}>Edit</Link>
                   </td>
                 </tr>
