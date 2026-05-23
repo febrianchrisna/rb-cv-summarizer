@@ -2,10 +2,10 @@
 
 /* Primary */
 :root {
-  --color-primary: #003e6f;
+  --color-primary: #005BAA;
   --color-on-primary: #ffffff;
-  --color-primary-container: #005696;
-  --color-on-primary-container: #a5cbff;
+  --color-primary-container: #005BAA;
+  --color-on-primary-container: #cce3ff;
   --color-primary-fixed: #d2e4ff;
   --color-primary-fixed-dim: #a1c9ff;
   --color-inverse-primary: #a1c9ff;
@@ -59,7 +59,7 @@
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Source Sans 3', 'Source Sans Pro', 'Inter', system-ui, sans-serif;
   background-color: var(--color-background);
   color: var(--color-on-surface);
   -webkit-font-smoothing: antialiased;

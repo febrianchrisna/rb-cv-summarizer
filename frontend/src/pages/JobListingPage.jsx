@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import PageHeader from '../components/PageHeader';
 
 export default function JobListingPage() {
   const navigate = useNavigate();
@@ -20,25 +23,14 @@ export default function JobListingPage() {
   }, []);
 
   return (
-    <div className="bg-background text-on-surface flex flex-col min-h-screen">
-      <header className="bg-primary flex justify-between items-center w-full px-6 py-4 top-0 z-50">
-        <div className="flex items-center gap-12">
-          <span className="text-2xl font-bold text-on-primary">ACC Career</span>
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-            <Link className="text-on-primary font-bold transition-all" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none' }} to="/">Job Posting</Link>
-            <Link className="text-on-primary font-bold transition-all" style={{ textDecoration: 'none' }} to="/job-listing">Job Listing</Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link to="/" className="bg-secondary-container text-on-secondary-container px-6 py-2 rounded text-sm font-bold" style={{ textDecoration: 'none' }}>Post a Job</Link>
-        </div>
-      </header>
+    <div style={{ backgroundColor: '#f5f6fa', minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: "'Inter', system-ui, sans-serif" }}>
+      <Navbar>
+        <Link to="/post-job" style={{ backgroundColor: '#FE9835', color: '#693600', fontWeight: 700, fontSize: '0.875rem', padding: '0.625rem 1.5rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', textDecoration: 'none', whiteSpace: 'nowrap' }}>+ Post a Job</Link>
+      </Navbar>
 
-      <main style={{ flexGrow: 1, width: '100%', maxWidth: '80rem', margin: '0 auto', padding: '2rem 1.5rem' }}>
-        <div style={{ marginBottom: '2rem', paddingLeft: '1rem', borderLeft: '4px solid var(--color-secondary-container)' }}>
-          <h1 className="text-3xl text-primary mb-2 font-bold">Application Tracking System</h1>
-          <p className="text-sm text-on-surface-variant">Manage and track active recruitment cycles across all departments.</p>
-        </div>
+      <PageHeader title="Application Tracking System" tabs={[{ label: 'Job Listing', active: true }]} />
+
+      <main style={{ flexGrow: 1, width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '1.75rem 2.5rem', boxSizing: 'border-box' }}>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
           {loading ? (
@@ -79,12 +71,7 @@ export default function JobListingPage() {
         </div>
       </main>
 
-      <footer className="bg-surface-container-lowest border-t border-outline-variant flex flex-col md:flex-row justify-between items-center w-full px-6 py-8 mt-auto">
-        <div className="mb-4">
-          <span className="text-sm font-bold text-primary">ACC Red Berries</span>
-          <p className="text-xs text-on-surface-variant mt-1">© 2024 Berijalan Recruitment Management System. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

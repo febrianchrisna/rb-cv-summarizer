@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 export default function ResultsPage() {
   const navigate = useNavigate();
@@ -43,18 +45,9 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="flex justify-between items-center w-full px-6 py-4" style={{ backgroundColor: '#003e6f' }}>
-        <div className="flex items-center gap-10">
-          <span className="text-white font-bold text-2xl">ACC Career</span>
-          <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-            <Link to="/" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.875rem', textDecoration: 'none' }}>Job Posting</Link>
-            <Link to="/job-listing" style={{ color: 'white', borderBottom: '2px solid #fe9835', paddingBottom: '0.25rem', fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none' }}>Job Listing</Link>
-          </nav>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button onClick={() => navigate('/post-job')} style={{ backgroundColor: '#fe9835', color: '#693600', fontWeight: 600, fontSize: '0.875rem', padding: '0.5rem 1.5rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Post a Job</button>
-        </div>
-      </header>
+      <Navbar>
+        <button onClick={() => navigate('/post-job')} style={{ backgroundColor: '#fe9835', color: '#693600', fontWeight: 600, fontSize: '0.875rem', padding: '0.5rem 1.5rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Post a Job</button>
+      </Navbar>
 
       <section className="px-6 py-12" style={{ backgroundColor: '#005696' }}>
         <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
@@ -172,15 +165,7 @@ export default function ResultsPage() {
         </div>
       )}
 
-      <footer className="bg-surface-container-lowest border-t border-outline-variant px-6 py-8 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-            <span style={{ color: 'var(--color-on-surface-variant)' }}>Powered By :</span>
-            <span style={{ fontWeight: 700, color: '#003e6f' }}>ACC Red Berries</span>
-          </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-on-surface-variant)', marginTop: '0.25rem' }}>© 2024 Berijalan Recruitment Management System. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
