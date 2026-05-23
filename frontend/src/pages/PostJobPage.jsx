@@ -1,5 +1,37 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import PageHeader from '../components/PageHeader';
+
+const STEPS = [
+  { step: 1, label: 'Job Information' },
+  { step: 2, label: 'Application & Screening Process' },
+  { step: null, label: 'Recruitment Process' },
+  { step: null, label: 'SEO Configuration' },
+  { step: null, label: 'Review & Publish' },
+];
+
+/* ── Shared input styles matching Figma ─────────────────────────── */
+const fieldStyle = {
+  width: '100%',
+  border: '1px solid #d1d5db',
+  borderRadius: '0.375rem',
+  padding: '0.625rem 0.875rem',
+  fontSize: '0.9375rem',
+  fontFamily: 'inherit',
+  color: '#111827',
+  backgroundColor: '#ffffff',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+const labelStyle = {
+  display: 'block',
+  fontSize: '0.875rem',
+  fontWeight: 600,
+  color: '#374151',
+  marginBottom: '0.375rem',
+};
 
 export default function PostJobPage() {
   const navigate = useNavigate();
@@ -46,19 +78,11 @@ export default function PostJobPage() {
       const payload = { ...form, status: 'draft' };
       const url = id ? `/api/jobs/${id}` : '/api/jobs';
       const method = id ? 'PUT' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const json = await res.json();
-      if (json.success) navigate('/job-listing');
+      if (json.success) navigate('/');
       else alert(json.error || 'Gagal menyimpan draft');
-    } catch (err) {
-      alert(err.message);
-    }
+    } catch (err) { alert(err.message); }
   };
 
   const handleCreatePost = async () => {
@@ -66,242 +90,270 @@ export default function PostJobPage() {
       const payload = { ...form, status: 'published' };
       const url = id ? `/api/jobs/${id}` : '/api/jobs';
       const method = id ? 'PUT' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const json = await res.json();
-      if (json.success) navigate('/job-listing');
+      if (json.success) navigate('/');
       else alert(json.error || 'Gagal mempublish lowongan');
-    } catch (err) {
-      alert(err.message);
-    }
+    } catch (err) { alert(err.message); }
   };
 
-  const handleDelete = async () => {
-    if (!id) return;
-    if (!confirm('Hapus lowongan ini?')) return;
-    
-    try {
-      const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
-      const json = await res.json();
-      if (json.success) navigate('/job-listing');
-      else alert(json.error || 'Gagal menghapus');
-    } catch (err) {
-      alert(err.message);
-    }
-  };
+  const addRequirement = () => setForm(prev => ({ ...prev, requirements: [...prev.requirements, { field: 'New Field', mandatory: false, value: '' }] }));
+  const updateRequirement = (index, key, val) => setForm(prev => { const reqs = [...prev.requirements]; reqs[index] = { ...reqs[index], [key]: val }; return { ...prev, requirements: reqs }; });
+  const removeRequirement = (index) => setForm(prev => ({ ...prev, requirements: prev.requirements.filter((_, i) => i !== index) }));
 
-  const addRequirement = () => {
-    setForm(prev => ({
-      ...prev,
-      requirements: [...prev.requirements, { field: 'New Field', mandatory: false, value: '' }]
-    }));
-  };
-  const updateRequirement = (index, key, val) => {
-    setForm(prev => {
-      const reqs = [...prev.requirements];
-      reqs[index] = { ...reqs[index], [key]: val };
-      return { ...prev, requirements: reqs };
-    });
-  };
-  const removeRequirement = (index) => {
-    setForm(prev => ({
-      ...prev,
-      requirements: prev.requirements.filter((_, i) => i !== index)
-    }));
-  };
-
-  const inputStyle = { width: '100%', border: '1px solid var(--color-outline)', padding: '0.75rem 1rem', outline: 'none', background: 'white', borderRadius: '0.25rem', fontFamily: 'inherit', fontSize: '0.875rem' };
-
-  if (loading) return <div className="p-10">Loading job data...</div>;
+  if (loading) return <div style={{ padding: '3rem', textAlign: 'center' }}>Loading job data...</div>;
 
   return (
-    <div className="bg-background text-on-surface font-sans min-h-screen flex flex-col">
-      {/* Top Nav */}
-      <nav className="flex justify-between items-center w-full px-6 py-4 bg-primary sticky top-0 z-50">
-        <div className="flex items-center gap-12">
-          <span className="text-2xl font-bold text-on-primary">ACC Career</span>
-          <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-            <Link className="text-on-primary border-b-2 border-secondary-container pb-1 font-bold" to="/">Job Posting</Link>
-            <Link style={{ color: 'rgba(255,255,255,0.8)' }} to="/job-listing">Job Listing</Link>
-          </div>
-        </div>
-        <Link to="/job-listing">
-          <button className="bg-secondary-container text-on-secondary-container px-6 py-2 font-bold text-sm rounded">Back to List</button>
+    <div style={{ backgroundColor: '#f5f6fa', minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: "'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif" }}>
+      <Navbar>
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <button style={{ backgroundColor: 'transparent', border: '1px solid #005BAA', color: '#005BAA', padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.9375rem', borderRadius: '0.375rem', cursor: 'pointer', fontFamily: 'inherit' }}>
+            Back to List
+          </button>
         </Link>
-      </nav>
+      </Navbar>
 
-      {/* Hero Banner */}
-      <header className="bg-primary-container text-on-primary-container px-6 py-10">
-        <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
-          <h1 className="text-3xl font-bold mb-2">{id ? 'Edit Job Posting' : 'Create New Job Posting'}</h1>
-          <p className="text-base" style={{ opacity: 0.8 }}>Design and publish your recruitment requirements with precision.</p>
-        </div>
-      </header>
+      <PageHeader title={id ? 'Edit Job Posting' : 'Post a Job'} tabs={[{ label: 'Job Posting', active: true }]} />
 
-      <main style={{ flexGrow: 1, maxWidth: '80rem', margin: '0 auto', width: '100%', padding: '1.5rem 1.5rem 3rem' }}>
-        <div className="flex flex-col gap-6" style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+      {/* Breadcrumb + Back link */}
+      <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%', padding: '1rem 2.5rem 0', boxSizing: 'border-box' }}>
+        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', color: '#005BAA', fontSize: '0.9375rem', fontWeight: 600, textDecoration: 'none' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+          Kembali
+        </Link>
+      </div>
 
-          {/* Sidebar Wizard */}
-          <aside style={{ width: '20rem', flexShrink: 0 }}>
-            <div className="bg-surface-container-lowest border border-outline-variant rounded shadow-sm" style={{ position: 'sticky', top: '5rem', paddingBottom: '1rem' }}>
-              <div className="p-4 border-b border-outline-variant">
-                <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Wizard Progress</h3>
-              </div>
-              <nav style={{ display: 'flex', flexDirection: 'column' }}>
-                {[
-                  { step: 1, label: 'Job Information' },
-                  { step: 2, label: 'Application & Screening' },
-                  { step: null, label: 'Recruitment Process' },
-                  { step: null, label: 'SEO Configuration' },
-                  { step: null, label: 'Preview & Publish' },
-                ].map(({ step, label }) => (
+      <main style={{ flexGrow: 1, maxWidth: '1400px', margin: '0 auto', width: '100%', padding: '1.25rem 2.5rem 3rem', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+
+          {/* ── Sidebar Wizard ── */}
+          <aside style={{ width: '240px', flexShrink: 0 }}>
+            <div style={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '0.5rem',
+              overflow: 'hidden',
+              position: 'sticky',
+              top: '5rem',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            }}>
+              {STEPS.map(({ step, label }, i) => {
+                const isActive = currentStep === step;
+                const isClickable = !!step;
+                return (
                   <button
                     key={label}
                     onClick={() => step && setCurrentStep(step)}
-                    disabled={!step}
+                    disabled={!isClickable}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: '1rem',
-                      padding: '1rem',
-                      borderTop: 'none', borderRight: 'none', borderBottom: 'none',
-                      borderLeft: `4px solid ${currentStep === step ? 'var(--color-secondary-container)' : 'transparent'}`,
-                      textAlign: 'left', background: currentStep === step ? 'rgba(0,62,111,0.05)' : 'transparent',
-                      color: currentStep === step ? 'var(--color-primary)' : 'var(--color-on-surface-variant)',
-                      opacity: !step ? 0.5 : 1, cursor: !step ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '0.875rem',
+                      width: '100%', padding: '0.875rem 1.125rem',
+                      border: 'none',
+                      borderLeft: `3px solid ${isActive ? '#005BAA' : 'transparent'}`,
+                      borderBottom: i < STEPS.length - 1 ? '1px solid #f3f4f6' : 'none',
+                      backgroundColor: isActive ? '#eff6ff' : 'transparent',
+                      textAlign: 'left',
+                      cursor: isClickable ? 'pointer' : 'not-allowed',
+                      opacity: !isClickable ? 0.45 : 1,
+                      fontFamily: 'inherit',
                     }}
                   >
-                    <span className="font-semibold text-sm">{label}</span>
+                    <span style={{
+                      width: '1.625rem', height: '1.625rem',
+                      borderRadius: '50%',
+                      backgroundColor: isActive ? '#005BAA' : '#e5e7eb',
+                      color: isActive ? '#ffffff' : '#6b7280',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '0.8125rem', fontWeight: 700, flexShrink: 0,
+                    }}>
+                      {i + 1}
+                    </span>
+                    <span style={{ fontSize: '0.9375rem', fontWeight: isActive ? 700 : 500, color: isActive ? '#005BAA' : '#374151' }}>
+                      {label}
+                    </span>
                   </button>
-                ))}
-              </nav>
+                );
+              })}
             </div>
           </aside>
 
-          <div style={{ flexGrow: 1 }}>
+          {/* ── Main Form Area ── */}
+          <div style={{ flexGrow: 1, minWidth: 0 }}>
+
             {/* Step 1: Job Information */}
             {currentStep === 1 && (
-              <section className="bg-surface-container-lowest border border-outline-variant shadow-sm rounded">
-                <div className="bg-secondary-container px-6 py-3">
-                  <h2 className="text-base font-bold text-on-secondary-container uppercase">1. Job Information</h2>
+              <div style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                <div style={{ padding: '1.5rem 1.75rem', borderBottom: '1px solid #f3f4f6' }}>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: 0 }}>Job Information</h2>
                 </div>
-                <div className="p-6" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <label className="text-sm font-semibold text-on-surface-variant">No. FPPK</label>
-                      <input value={form.fppk} onChange={e => setForm({ ...form, fppk: e.target.value })} style={inputStyle} placeholder="Enter FPPK Number..." type="text" />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <label className="text-sm font-semibold text-on-surface-variant">Job Position (internal name)</label>
-                      <input value={form.position_name} onChange={e => setForm({ ...form, position_name: e.target.value })} style={inputStyle} placeholder="Contoh: Senior Fullstack Developer" type="text" />
-                    </div>
+
+                <div style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+                  {/* No. FPPK */}
+                  <div>
+                    <label style={labelStyle}>No. FPPK</label>
+                    <input
+                      value={form.fppk}
+                      onChange={e => setForm({ ...form, fppk: e.target.value })}
+                      style={fieldStyle}
+                      placeholder="e.g. 001/AC/FPPK/XI/2020"
+                      type="text"
+                    />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <label className="text-sm font-semibold text-on-surface-variant">Job Post Title (display name)</label>
-                      <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} style={inputStyle} type="text" />
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <label className="text-sm font-semibold text-on-surface-variant">Job Category</label>
-                      <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={inputStyle}>
+
+                  {/* Job Specification row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem' }}>
+                    <div>
+                      <label style={labelStyle}>Job Category <span style={{ color: '#ef4444' }}>*</span></label>
+                      <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} style={fieldStyle}>
                         <option value="Experienced">Experienced</option>
                         <option value="Fresh Graduate">Fresh Graduate</option>
                         <option value="Internship">Internship</option>
                       </select>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <label className="text-sm font-semibold text-on-surface-variant">Field</label>
-                      <input value={form.field} onChange={e => setForm({ ...form, field: e.target.value })} placeholder="e.g., IT" style={inputStyle} />
+                    <div>
+                      <label style={labelStyle}>Job Field <span style={{ color: '#ef4444' }}>*</span></label>
+                      <input value={form.field} onChange={e => setForm({ ...form, field: e.target.value })} style={fieldStyle} placeholder="e.g. Information Technology" />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Job Position (internal)</label>
+                      <input value={form.position_name} onChange={e => setForm({ ...form, position_name: e.target.value })} style={fieldStyle} placeholder="e.g. Senior Fullstack Developer" />
                     </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label className="text-sm font-semibold text-on-surface-variant">Job Post Description</label>
-                    <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, resize: 'none' }} placeholder="Enter detailed job responsibilities..." rows="4" />
+
+                  {/* Job Post Info */}
+                  <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.0625rem', fontWeight: 700, color: '#111827', marginBottom: '1.25rem' }}>Job Post Information</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                      <div>
+                        <label style={labelStyle}>Job Post Title <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} style={fieldStyle} placeholder="e.g. UI/UX Designer" />
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label className="text-sm font-semibold text-on-surface-variant">Qualification Description</label>
-                    <textarea value={form.qualification} onChange={e => setForm({ ...form, qualification: e.target.value })} style={{ ...inputStyle, resize: 'none' }} placeholder="List required skills and education..." rows="4" />
+
+                  {/* Descriptions */}
+                  <div>
+                    <label style={labelStyle}>Job Post Description <span style={{ color: '#ef4444' }}>*</span></label>
+                    <textarea
+                      value={form.description}
+                      onChange={e => setForm({ ...form, description: e.target.value })}
+                      style={{ ...fieldStyle, resize: 'vertical', minHeight: '140px' }}
+                      placeholder="Enter detailed job responsibilities..."
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Qualification Description</label>
+                    <textarea
+                      value={form.qualification}
+                      onChange={e => setForm({ ...form, qualification: e.target.value })}
+                      style={{ ...fieldStyle, resize: 'vertical', minHeight: '140px' }}
+                      placeholder="List required skills and education..."
+                    />
                   </div>
                 </div>
-              </section>
+              </div>
             )}
 
             {/* Step 2: Application & Screening */}
             {currentStep === 2 && (
-              <section className="bg-surface-container-lowest border border-outline-variant shadow-sm rounded">
-                <div className="bg-primary-container px-6 py-3">
-                  <h2 className="text-base font-bold text-on-primary-container uppercase">2. Application & Screening Process</h2>
+              <div style={{ backgroundColor: '#ffffff', borderRadius: '0.5rem', border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                <div style={{ padding: '1.5rem 1.75rem', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', margin: 0 }}>Application &amp; Screening Process</h2>
+                  <button onClick={addRequirement} style={{ backgroundColor: '#005BAA', color: '#ffffff', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    + Add Requirement
+                  </button>
                 </div>
-                <div className="p-6">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                    <h3 className="text-base font-bold text-primary">Preferred Qualifications</h3>
-                    <button onClick={addRequirement} className="text-primary text-sm font-bold" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>+ Add Requirement</button>
-                  </div>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead className="bg-secondary-container text-on-secondary-container text-sm">
-                        <tr>
-                          <th className="px-4 py-3 text-left uppercase">Requirement Field</th>
-                          <th className="px-4 py-3 text-left uppercase">Mandatory</th>
-                          <th className="px-4 py-3 text-left uppercase">Value/Constraint</th>
-                          <th className="px-4 py-3 text-right uppercase">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {form.requirements?.map((req, i) => (
-                          <tr key={i} style={{ borderBottom: '1px solid var(--color-outline-variant)' }}>
-                            <td className="px-4 py-3">
-                              <input value={req.field} onChange={e => updateRequirement(i, 'field', e.target.value)} style={{ border: '1px solid var(--color-outline)', padding: '0.25rem 0.5rem', width: '100%', borderRadius: '0.25rem' }} type="text" />
-                            </td>
-                            <td className="px-4 py-3">
-                              <input type="checkbox" checked={req.mandatory} onChange={e => updateRequirement(i, 'mandatory', e.target.checked)} />
-                            </td>
-                            <td className="px-4 py-3">
-                              <input value={req.value} onChange={e => updateRequirement(i, 'value', e.target.value)} style={{ border: '1px solid var(--color-outline)', padding: '0.25rem 0.5rem', width: '100%', borderRadius: '0.25rem' }} type="text" />
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              <button onClick={() => removeRequirement(i)} className="text-error font-bold text-lg leading-none" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>x</button>
-                            </td>
-                          </tr>
+                <div style={{ padding: '1.75rem', overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#FE9835' }}>
+                        {['Requirement Field', 'Mandatory', 'Value / Constraint', ''].map(h => (
+                          <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: 700, color: '#693600', whiteSpace: 'nowrap' }}>{h}</th>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {form.requirements?.map((req, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                          <td style={{ padding: '0.75rem 1rem' }}>
+                            <input value={req.field} onChange={e => updateRequirement(i, 'field', e.target.value)} style={{ ...fieldStyle, padding: '0.4rem 0.625rem', fontSize: '0.875rem' }} />
+                          </td>
+                          <td style={{ padding: '0.75rem 1rem' }}>
+                            <input type="checkbox" checked={req.mandatory} onChange={e => updateRequirement(i, 'mandatory', e.target.checked)} style={{ width: '1rem', height: '1rem', cursor: 'pointer', accentColor: '#005BAA' }} />
+                          </td>
+                          <td style={{ padding: '0.75rem 1rem' }}>
+                            <input value={req.value} onChange={e => updateRequirement(i, 'value', e.target.value)} style={{ ...fieldStyle, padding: '0.4rem 0.625rem', fontSize: '0.875rem' }} />
+                          </td>
+                          <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
+                            <button onClick={() => removeRequirement(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '1.125rem', fontWeight: 700, lineHeight: 1, fontFamily: 'inherit' }}>×</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </section>
+              </div>
             )}
 
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', padding: '1.5rem 0', borderTop: '1px solid var(--color-outline-variant)', marginTop: '1.5rem' }}>
-              <div>
-                {currentStep === 2 && id && (
-                  <button onClick={handleDelete} style={{ padding: '0.75rem 1.5rem', border: '1px solid var(--color-error)', color: 'var(--color-error)', fontWeight: 700, borderRadius: '0.25rem', background: 'none', cursor: 'pointer' }}>Delete Post</button>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                {currentStep === 1 && (
-                  <>
-                    <button onClick={handleSaveDraft} style={{ padding: '0.75rem 1.5rem', border: '1px solid var(--color-primary)', color: 'var(--color-primary)', fontWeight: 700, borderRadius: '0.25rem', background: 'none', cursor: 'pointer' }}>Save Draft</button>
-                    <button onClick={() => setCurrentStep(2)} style={{ padding: '0.75rem 1.5rem', background: 'var(--color-secondary-container)', color: 'var(--color-on-secondary-container)', fontWeight: 700, borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Next →</button>
-                  </>
-                )}
-                {currentStep === 2 && (
-                  <>
-                    <button onClick={() => setCurrentStep(1)} style={{ padding: '0.75rem 1.5rem', border: '1px solid var(--color-primary)', color: 'var(--color-primary)', fontWeight: 700, borderRadius: '0.25rem', background: 'none', cursor: 'pointer' }}>← Back</button>
-                    <button onClick={handleSaveDraft} style={{ padding: '0.75rem 1.5rem', border: '1px solid var(--color-primary)', color: 'var(--color-primary)', fontWeight: 700, borderRadius: '0.25rem', background: 'none', cursor: 'pointer' }}>Save Draft</button>
-                    <button onClick={handleCreatePost} style={{ padding: '0.75rem 1.5rem', background: 'var(--color-secondary-container)', color: 'var(--color-on-secondary-container)', fontWeight: 700, borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>{id ? 'Save Changes' : 'Create New Post'}</button>
-                  </>
-                )}
-              </div>
+            {/* ── Action Buttons (matches Figma: bottom-right, Save as Draft + Create New Post) ── */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.875rem', marginTop: '1.5rem' }}>
+              {currentStep === 1 && (
+                <>
+                  <button
+                    onClick={handleSaveDraft}
+                    style={{ padding: '0.6875rem 1.5rem', border: '1px solid #005BAA', borderRadius: '0.375rem', backgroundColor: '#ffffff', color: '#005BAA', fontWeight: 700, fontSize: '0.9375rem', cursor: 'pointer', fontFamily: 'inherit' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#ffffff'}
+                  >
+                    Save as Draft
+                  </button>
+                  <button
+                    onClick={() => setCurrentStep(2)}
+                    style={{ padding: '0.6875rem 1.5rem', border: 'none', borderRadius: '0.375rem', backgroundColor: '#005BAA', color: '#ffffff', fontWeight: 700, fontSize: '0.9375rem', cursor: 'pointer', fontFamily: 'inherit' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#0047a3'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#005BAA'}
+                  >
+                    Next →
+                  </button>
+                </>
+              )}
+              {currentStep === 2 && (
+                <>
+                  <button
+                    onClick={() => setCurrentStep(1)}
+                    style={{ padding: '0.6875rem 1.5rem', border: '1px solid #d1d5db', borderRadius: '0.375rem', backgroundColor: '#ffffff', color: '#374151', fontWeight: 600, fontSize: '0.9375rem', cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    onClick={handleSaveDraft}
+                    style={{ padding: '0.6875rem 1.5rem', border: '1px solid #005BAA', borderRadius: '0.375rem', backgroundColor: '#ffffff', color: '#005BAA', fontWeight: 700, fontSize: '0.9375rem', cursor: 'pointer', fontFamily: 'inherit' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#ffffff'}
+                  >
+                    Save as Draft
+                  </button>
+                  <button
+                    onClick={handleCreatePost}
+                    style={{ padding: '0.6875rem 1.5rem', border: 'none', borderRadius: '0.375rem', backgroundColor: '#005BAA', color: '#ffffff', fontWeight: 700, fontSize: '0.9375rem', cursor: 'pointer', fontFamily: 'inherit' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#0047a3'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = '#005BAA'}
+                  >
+                    {id ? 'Save Changes' : 'Create New Post'}
+                  </button>
+                </>
+              )}
             </div>
+
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

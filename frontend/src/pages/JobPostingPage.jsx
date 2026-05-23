@@ -1,10 +1,111 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import PageHeader from '../components/PageHeader';
+
+/* ── Icons ───────────────────────────────────────────────────────── */
+const IconEdit = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+);
+const IconTrash = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6"/>
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+    <path d="M10 11v6M14 11v6"/>
+    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+  </svg>
+);
+
+/* ── Delete Confirmation Modal ───────────────────────────────────── */
+function DeleteModal({ onConfirm, onCancel }) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 1000,
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '0.75rem',
+        padding: '2.5rem 2rem 2rem',
+        width: '100%',
+        maxWidth: '420px',
+        textAlign: 'center',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+        animation: 'modalSlideIn 0.22s ease forwards',
+      }}>
+        {/* Trash icon circle */}
+        <div style={{
+          width: '4rem', height: '4rem',
+          borderRadius: '50%',
+          backgroundColor: '#fee2e2',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 1.25rem',
+        }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+        </div>
+
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', marginBottom: '0.625rem' }}>
+          Hapus Job Post?
+        </h3>
+        <p style={{ fontSize: '0.9375rem', color: '#6b7280', lineHeight: 1.6, marginBottom: '2rem' }}>
+          Kamu yakin ingin menghapus job post ini? Data yang dihapus tidak dapat dikembalikan.
+        </p>
+
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button
+            onClick={onCancel}
+            style={{
+              flex: 1, padding: '0.75rem',
+              border: '1px solid #d1d5db', borderRadius: '0.5rem',
+              backgroundColor: '#ffffff', color: '#005BAA',
+              fontWeight: 700, fontSize: '0.9375rem',
+              cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#ffffff'}
+          >
+            Batal
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{
+              flex: 1, padding: '0.75rem',
+              border: 'none', borderRadius: '0.5rem',
+              backgroundColor: '#ef4444', color: '#ffffff',
+              fontWeight: 700, fontSize: '0.9375rem',
+              cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#dc2626'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = '#ef4444'}
+          >
+            Hapus
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Column definitions ──────────────────────────────────────────── */
+const HEADER_COLS = ['No. FPPK', 'Job Post Title', 'Job Category', 'Job Field', 'Posted Date', 'Date Modified', 'Actions'];
 
 export default function JobPostingPage() {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState(null); // job id to delete
 
   useEffect(() => {
     fetch('/api/jobs')
@@ -19,77 +120,178 @@ export default function JobPostingPage() {
       });
   }, []);
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`/api/jobs/${deleteTarget}`, { method: 'DELETE' });
+      setJobs(prev => prev.filter(j => j.id !== deleteTarget));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeleteTarget(null);
+    }
+  };
+
+  const formatDate = (iso) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  };
+
+  const tabs = [{ label: 'Job Posting', active: true }];
+
   return (
-    <div className="bg-background text-on-surface font-sans min-h-screen flex flex-col">
-      <header className="bg-primary text-on-primary text-lg font-semibold flex justify-between items-center w-full px-6 py-4">
-        <div className="flex items-center gap-12">
-          <span className="text-2xl font-bold text-on-primary">ACC Career</span>
-          <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-            <Link className="text-on-primary font-bold transition-all" style={{ textDecoration: 'none' }} to="/">Job Posting</Link>
-            <Link className="text-on-primary font-bold transition-all" style={{ opacity: 0.8, textDecoration: 'none' }} to="/job-listing">Job Listing</Link>
-          </nav>
-        </div>
-      </header>
+    <div style={{ backgroundColor: '#f5f6fa', minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: "'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif" }}>
+      {/* Delete Modal */}
+      {deleteTarget && (
+        <DeleteModal
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
 
-      <section className="bg-primary-container text-on-primary-container px-6 py-12">
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <h1 className="text-3xl font-bold mb-2 text-on-primary">Job Posting Management</h1>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>Manage and monitor all recruitment requests and published job listings from a centralized dashboard.</p>
-        </div>
-      </section>
+      <Navbar>
+        <Link
+          to="/post-job"
+          style={{
+            backgroundColor: '#FE9835', color: '#693600',
+            fontWeight: 700, fontSize: '0.9375rem',
+            padding: '0.625rem 1.5rem', borderRadius: '0.375rem',
+            border: 'none', cursor: 'pointer',
+            textDecoration: 'none', display: 'inline-flex',
+            alignItems: 'center', gap: '0.375rem', whiteSpace: 'nowrap',
+          }}
+        >
+          + Post a Job
+        </Link>
+      </Navbar>
 
-      <main style={{ flexGrow: 1, padding: '2rem 1.5rem', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
-        <div className="flex justify-end items-center mb-6">
-          <Link to="/post-job" className="bg-secondary-container text-on-secondary-container px-8 py-3 rounded shadow-sm text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all" style={{ textDecoration: 'none' }}>
-            <span style={{ fontSize: '1.125rem', lineHeight: 1 }}>+</span>
-            Post a Job
-          </Link>
-        </div>
+      {/* Page Header Banner */}
+      <PageHeader title="Job Post Management" tabs={tabs} />
 
-        <div className="bg-surface-container-lowest rounded-lg overflow-hidden border border-outline-variant" style={{ color: 'black' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      {/* Main Content */}
+      <main style={{ flexGrow: 1, padding: '1.75rem 2.5rem', maxWidth: '1400px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '0.5rem',
+          overflow: 'hidden',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+          border: '1px solid #e5e7eb',
+        }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
+            {/* Header */}
             <thead>
-              <tr className="bg-secondary-container text-on-secondary-container">
-                <th className="text-sm font-semibold px-4 py-4 text-left uppercase tracking-wider">No. FPPK</th>
-                <th className="text-sm font-semibold px-4 py-4 text-left uppercase tracking-wider">Job Post Title</th>
-                <th className="text-sm font-semibold px-4 py-4 text-left uppercase tracking-wider">Job Category</th>
-                <th className="text-sm font-semibold px-4 py-4 text-left uppercase tracking-wider">Job Field</th>
-                <th className="text-sm font-semibold px-4 py-4 text-left uppercase tracking-wider">Posted Date</th>
+              <tr style={{ backgroundColor: '#FE9835' }}>
+                {HEADER_COLS.map(col => (
+                  <th key={col} style={{
+                    padding: '0.875rem 1rem', textAlign: 'left',
+                    fontSize: '0.9375rem', fontWeight: 700,
+                    color: '#693600', whiteSpace: 'nowrap',
+                  }}>
+                    {col}
+                  </th>
+                ))}
               </tr>
             </thead>
+
+            {/* Body */}
             <tbody>
               {loading ? (
-                <tr><td colSpan="5" className="px-4 py-8 text-center text-sm">Loading jobs...</td></tr>
-              ) : jobs.length > 0 ? jobs.map(job => (
-                <tr key={job.id} className="bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer">
-                  <td className="px-4 py-4 text-sm"><Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{job.fppk || '-'}</Link></td>
-                  <td className="px-4 py-4 text-sm font-semibold text-primary"><Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{job.title || '-'}</Link></td>
-                  <td className="px-4 py-4 text-sm text-on-surface-variant"><Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{job.category || 'Permanent'}</Link></td>
-                  <td className="px-4 py-4 text-sm text-on-surface-variant"><Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{job.field || '-'}</Link></td>
-                  <td className="px-4 py-4 text-sm text-on-surface-variant" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Link to={`/job-detail/${job.id}`} style={{ display: 'block' }}>{job.created_at ? new Date(job.created_at).toLocaleDateString() : '-'}</Link>
-                    <Link to={`/post-job?id=${job.id}`} style={{ color: 'var(--color-secondary)', padding: '0.25rem 0.75rem', border: '1px solid var(--color-secondary)', borderRadius: '0.25rem', fontSize: '0.75rem' }}>Edit</Link>
+                <tr>
+                  <td colSpan={HEADER_COLS.length} style={{ padding: '3rem', textAlign: 'center', color: '#6b7280', fontSize: '0.9375rem' }}>
+                    Loading jobs...
                   </td>
                 </tr>
-              )) : (
-                <tr className="bg-surface-container-lowest">
-                  <td colSpan="5" className="px-4 py-8 text-center text-sm text-on-surface-variant">No jobs found. Click "Post a Job" to post one.</td>
+              ) : jobs.length > 0 ? (
+                jobs.map((job, idx) => (
+                  <tr
+                    key={job.id}
+                    style={{
+                      backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb',
+                      borderBottom: '1px solid #f0f0f0',
+                      transition: 'background-color 0.15s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? '#ffffff' : '#f9fafb'}
+                  >
+                    {/* No. FPPK */}
+                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.9375rem' }}>
+                      <Link to={`/job-detail/${job.id}`} style={{ color: '#005BAA', fontWeight: 600, textDecoration: 'none' }}>
+                        {job.fppk || `001/AC/FPPK/XI/${job.id}`}
+                      </Link>
+                    </td>
+
+                    {/* Job Post Title */}
+                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.9375rem', color: '#111827', fontWeight: 500 }}>
+                      {job.title || '-'}
+                    </td>
+
+                    {/* Job Category */}
+                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.9375rem', color: '#374151' }}>
+                      {job.category || 'Experienced'}
+                    </td>
+
+                    {/* Job Field */}
+                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.9375rem', color: '#374151' }}>
+                      {job.field || '-'}
+                    </td>
+
+                    {/* Posted Date */}
+                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.9375rem', color: '#374151', whiteSpace: 'nowrap' }}>
+                      {formatDate(job.created_at)}
+                    </td>
+
+                    {/* Date Modified */}
+                    <td style={{ padding: '0.875rem 1rem', fontSize: '0.9375rem', color: '#374151', whiteSpace: 'nowrap' }}>
+                      {formatDate(job.updated_at || job.created_at)}
+                    </td>
+
+                    {/* Actions — hanya 2: Edit & Delete */}
+                    <td style={{ padding: '0.875rem 1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        {/* Edit */}
+                        <button
+                          title="Edit"
+                          onClick={() => navigate(`/post-job?id=${job.id}`)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem', borderRadius: '0.25rem', display: 'flex', alignItems: 'center' }}
+                        >
+                          <IconEdit />
+                        </button>
+
+                        {/* Delete */}
+                        <button
+                          title="Hapus"
+                          onClick={() => setDeleteTarget(job.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem', borderRadius: '0.25rem', display: 'flex', alignItems: 'center' }}
+                        >
+                          <IconTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={HEADER_COLS.length} style={{ padding: '4rem', textAlign: 'center', color: '#6b7280', fontSize: '0.9375rem' }}>
+                    Belum ada lowongan. Klik <strong>"+ Post a Job"</strong> untuk menambahkan.
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
+
+          {/* Row count */}
+          {!loading && jobs.length > 0 && (
+            <div style={{ padding: '0.875rem 1rem', borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.9375rem', color: '#6b7280' }}>
+                1 to {jobs.length} of {jobs.length} items
+              </span>
+            </div>
+          )}
         </div>
       </main>
 
-      <footer className="bg-surface-container-lowest text-on-surface-variant text-xs border-t border-outline-variant flex flex-col md:flex-row justify-between items-center w-full px-6 py-8 mt-auto" style={{ color: 'black' }}>
-        <div className="flex flex-col items-center gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-on-surface-variant">Powered By :</span>
-            <span className="text-sm font-bold text-primary">ACC Red Berries</span>
-          </div>
-          <p>© 2024 Berijalan Recruitment Management System. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
