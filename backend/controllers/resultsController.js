@@ -13,37 +13,43 @@ export async function getResults(req, res) {
     }
 
     const { data, error } = await supabase
-      .from('trn_candidate_analysis')
+      .from('trn_applicant_analysis')
       .select(`
         *,
-        mst_candidate (*),
-        mst_job_post (*)
+        application:trn_job_application!inner (
+          *,
+          job:mst_job_post (*)
+        )
       `)
-      .eq('job_id', job_id)
+      .eq('application.job_id', job_id)
       .eq('status', 'done')
       .order('score', { ascending: false });
 
     if (error) throw error;
 
     // Map data agar formatnya konsisten untuk frontend
-    const mappedData = data.map(item => ({
-      id: item.id,
-      candidate_name: item.mst_candidate?.name,
-      email: item.mst_candidate?.email,
-      phone: item.mst_candidate?.phone,
-      file_name: item.mst_candidate?.file_name,
-      score: item.score,
-      match_level: item.match_level,
-      summary: item.summary,
-      reasoning: item.reasoning,
-      matched_requirements: item.matched_requirements,
-      missing_requirements: item.missing_requirements,
-      role_name: item.role_name,
-      role_scores: item.role_scores,
-      status: item.status,
-      job_title: item.mst_job_post?.title,
-      created_at: item.created_at
-    }));
+    const mappedData = data.map(item => {
+      const app = item.application;
+
+      return {
+        id: item.id,
+        candidate_name: app?.name,
+        email: app?.email,
+        phone: app?.phone,
+        file_name: app?.file_name,
+        score: item.score,
+        match_level: item.match_level,
+        summary: item.summary,
+        reasoning: item.reasoning,
+        matched_requirements: item.matched_requirements,
+        missing_requirements: item.missing_requirements,
+        role_name: item.role_name,
+        role_scores: item.role_scores,
+        status: item.status,
+        job_title: app?.job?.title,
+        created_at: item.created_at
+      };
+    });
 
     return res.json({ success: true, data: mappedData });
   } catch (err) {

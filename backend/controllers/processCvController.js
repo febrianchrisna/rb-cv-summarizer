@@ -116,18 +116,31 @@ Berikan penilaian yang OBJEKTIF dan SPESIFIK. Kembalikan HANYA JSON:
 // STEP 2B — ROLE ASSIGNMENT AGENT (multi-role job)
 // ─────────────────────────────────────────────────────────────
 async function fetchExistingByRole(positionName, roles) {
+  // Query dari application karena application punya job_id (ke mst_job_post)
+  // dan analysis punya job_application_id (ke trn_job_application)
   const { data } = await supabase
-    .from('candidates')
-    .select('role_name, candidate_name, summary, score')
-    .eq('position_name', positionName)
-    .eq('status', 'done')
+    .from('trn_job_application')
+    .select(`
+      role_name, 
+      name, 
+      summary, 
+      analysis:trn_applicant_analysis(score),
+      job:mst_job_post!inner(position_name)
+    `)
+    .eq('job.position_name', positionName)
     .not('role_name', 'is', null)
-    .order('score', { ascending: false });
+    .order('created_at', { ascending: false });
 
   const grouped = {};
   for (const role of roles) {
     const inRole = (data || []).filter(c => c.role_name === role).slice(0, 4);
-    grouped[role] = inRole.map(c => `${c.candidate_name || 'N/A'} (skor ${c.score ?? '-'}): ${c.summary || '-'}`);
+    // Analysis di sini akan jadi objek karena job_application_id ada di trn_applicant_analysis
+    // Tapi karena satu aplikasi bisa punya banyak analisis (secara skema), ia bisa jadi array.
+    // Namun biasanya kita ambil yang terbaru atau yang statusnya done.
+    grouped[role] = inRole.map(c => {
+      const score = Array.isArray(c.analysis) ? c.analysis[0]?.score : c.analysis?.score;
+      return `${c.name || 'N/A'} (skor ${score ?? '-'}): ${c.summary || '-'}`;
+    });
   }
   return grouped;
 }
@@ -215,12 +228,15 @@ export async function processCv(req, res) {
     }
 
     // Ambil data transaksi, data kandidat, dan data job post
+    // Relasi terbaru: Analysis -> Application -> Job Post
     const { data: analysis, error: fetchError } = await supabase
-      .from('trn_candidate_analysis')
+      .from('trn_applicant_analysis')
       .select(`
         *,
-        mst_candidate (*),
-        mst_job_post (*)
+        application:trn_job_application (
+          *,
+          job:mst_job_post (*)
+        )
       `)
       .eq('id', analysisId)
       .single();
@@ -228,17 +244,18 @@ export async function processCv(req, res) {
     if (fetchError) throw fetchError;
     if (!analysis) throw new Error('Data analisis tidak ditemukan');
 
-    const candidate = analysis.mst_candidate;
-    const job = analysis.mst_job_post;
+    // job_application_id ada di trn_applicant_analysis, jadi 'application' akan berupa objek
+    const application = analysis.application;
+    const job = application?.job;
 
-    if (!candidate || !job) throw new Error('Data kandidat atau job tidak lengkap');
+    if (!application || !job) throw new Error('Data aplikasi atau job tidak lengkap');
 
-    const cvText = candidate.cv_text;
-    const pdfBase64 = candidate.pdf_base64;
+    const cvText = application.cv_text;
+    const pdfBase64 = application.pdf_base64;
 
     if (!cvText && !pdfBase64) throw new Error('Data CV tidak ditemukan');
 
-    await supabase.from('trn_candidate_analysis').update({ status: 'processing' }).eq('id', analysisId);
+    await supabase.from('trn_applicant_analysis').update({ status: 'processing' }).eq('id', analysisId);
 
     console.log(`[cv-agent] Mulai analisis transaksi ${analysisId}`);
 
@@ -247,12 +264,12 @@ export async function processCv(req, res) {
     const profile = await extractCandidateProfile(cvText, pdfBase64);
     console.log(`[cv-agent] Step 1 selesai: ${profile.candidate_name}`);
 
-    // Update profil dasar kandidat jika belum ada atau untuk sinkronisasi terbaru
-    await supabase.from('mst_candidate').update({
+    // Update profil dasar aplikasi jika belum ada atau untuk sinkronisasi terbaru
+    await supabase.from('trn_job_application').update({
       name: profile.candidate_name,
       email: profile.email,
       phone: profile.phone
-    }).eq('id', candidate.id);
+    }).eq('id', application.id);
 
     await new Promise(r => setTimeout(r, 1000));
 
@@ -272,8 +289,8 @@ export async function processCv(req, res) {
 
     if (isMultiRole) {
       console.log(`[cv-agent] Step 2 — multi-role assignment (${roles.join(', ')})...`);
-      // Kita bisa tambahkan logic fetchExistingByRole di sini jika diperlukan di masa depan
-      match = await assignMultiRole(profile, parameters, {});
+      const existingByRole = await fetchExistingByRole(parameters.positionName, roles);
+      match = await assignMultiRole(profile, parameters, existingByRole);
       console.log(`[cv-agent] Step 2 selesai: role=${match.recommended_role}, skor=${match.score}`);
     } else {
       console.log(`[cv-agent] Step 2 — cocokkan dengan job: ${job.title}`);
@@ -285,7 +302,7 @@ export async function processCv(req, res) {
     const finalRoleName = match.recommended_role || null;
 
     const { error: updateError } = await supabase
-      .from('trn_candidate_analysis')
+      .from('trn_applicant_analysis')
       .update({
         score,
         match_level: match.match_level,
@@ -308,7 +325,7 @@ export async function processCv(req, res) {
     console.error('[cv-agent] Error:', err.message);
     if (analysisId) {
       await supabase
-        .from('trn_candidate_analysis')
+        .from('trn_applicant_analysis')
         .update({ status: 'error', error_message: err.message })
         .eq('id', analysisId);
     }

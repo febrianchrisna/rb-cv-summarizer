@@ -29,25 +29,25 @@ export async function queueCv(req, res) {
       ? buffer.toString('base64')
       : null;
 
-    // 1. Simpan ke mst_candidate
-    const { data: candidate, error: candError } = await supabase
-      .from('mst_candidate')
+    // 1. Simpan ke trn_job_application (dengan job_id baru)
+    const { data: application, error: appError } = await supabase
+      .from('trn_job_application')
       .insert({
         file_name: cvFile.originalname,
         cv_text: truncatedText,
         pdf_base64: pdfBase64,
+        job_id: jobId, // Sekarang job_id ada di sini
       })
       .select()
       .single();
 
-    if (candError) throw candError;
+    if (appError) throw appError;
 
-    // 2. Buat record di trn_candidate_analysis
+    // 2. Buat record di trn_applicant_analysis
     const { data: analysis, error: analError } = await supabase
-      .from('trn_candidate_analysis')
+      .from('trn_applicant_analysis')
       .insert({
-        job_id: jobId,
-        candidate_id: candidate.id,
+        job_application_id: application.id, // Relasi ke aplikasi
         status: 'pending',
       })
       .select()
@@ -55,7 +55,7 @@ export async function queueCv(req, res) {
 
     if (analError) throw analError;
 
-    return res.status(201).json({ success: true, analysisId: analysis.id, candidateId: candidate.id });
+    return res.status(201).json({ success: true, analysisId: analysis.id, applicationId: application.id });
 
   } catch (err) {
     console.error('queue-cv error:', err);
